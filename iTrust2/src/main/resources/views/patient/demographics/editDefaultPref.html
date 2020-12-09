@@ -1,0 +1,320 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Edit Default Preferences</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+		/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+		/*<![CDATA[*/
+ 			var app = angular.module("managePharmacistsApp", []);
+			app.controller("managePharmacistsCtrl", function($scope, $http) {
+			
+			$scope.patientPreferenceForm = {
+				branded : "",
+				defaultPharmacyId : ""
+			};
+			$scope.existingBrand = "";
+			$scope.existingPharmacy = "";
+	        $scope.state = "";
+            $scope.selectedPharmacy = {};
+            $scope.successMessage = "";
+            $scope.errorMessage = "";
+		    
+	        $scope.loadPharmacies = function (state) {
+	          $http.get("/iTrust2/api/v1/pharmacies/state/" + state).then(
+	            function (response) {
+	              $scope.pharmacies = response.data;
+	            }, function (rejection) {
+	              $scope.pharmacies = [];
+	                document.getElementById("successMessage").style.visibility = "hidden";
+	                document.getElementById("errorMessage").style.visibility = "visible";
+	              $scope.errorMessage = "Could not get pharmacies in the selected state";
+	            });
+	        }
+	        
+	        $scope.reload = function() {
+	        	$scope.getDefaultPrefs();
+	        	$scope.state = "";
+                $scope.selectedPharmacy = {};
+	        	$scope.pharmacies = [];
+	        	$scope.patientPreferenceForm = {
+	        		branded : "",
+		    	    defaultPharmacyId : ""
+	        	};
+	        }
+	        
+  $scope.getDefaultPrefs = function() {
+	  $http.get("/iTrust2/api/v1/patient/preference").then(
+		function(response) {
+			if (response.data.branded) {
+				$scope.existingBrand = "Brand"; 
+				$scope.patientPreferenceForm.branded = "true";
+			} else {
+				$scope.existingBrand = "Generic";
+				$scope.patientPreferenceForm.branded = "false";
+			}
+			if (response.data.defaultPharmacyId != "") {
+				$http.get("/iTrust2/api/v1/pharmacies/" + response.data.defaultPharmacyId).then(
+						function(response2) {
+						$scope.existingPharmacy = response2.data.name + ", " + response2.data.address + ", " + response2.data.state + " - " + response2.data.zip;
+						$scope.state = response2.data.state;
+						$scope.loadPharmacies($scope.state);
+				}, function (rejection) {
+					$scope.existingPharmacy = "[Pharmacy not found, please update your preferences]";
+				});
+			}			
+		}, function (rejection) {
+			$scope.existingPharmacy = "[Preference not set]";
+			$scope.existingBrand = "[Preference not set]";
+		});
+  }
+
+	        	        
+  $scope.setDefaultPrefs = function () {
+	  	$scope.patientPreferenceForm.defaultPharmacyId = $scope.selectedPharmacy.id;
+	  	if($scope.patientPreferenceForm.branded == null || $scope.patientPreferenceForm.branded == "") {
+            document.getElementById("successMessage").style.visibility = "hidden";
+            document.getElementById("errorMessage").style.visibility = "visible";
+	  		$scope.errorMessage = "Please select a brand preference.";
+	  	} else if ($scope.patientPreferenceForm.defaultPharmacyId == null || $scope.patientPreferenceForm.defaultPharmacyId == "") {
+            document.getElementById("successMessage").style.visibility = "hidden";
+            document.getElementById("errorMessage").style.visibility = "visible";
+	  		$scope.errorMessage = "Please select a valid pharmacy";
+	  	} else {
+    	$http.put("/iTrust2/api/v1/patient/preference", $scope.patientPreferenceForm).then(
+    		function(response) {
+                $scope.reload();
+                document.getElementById("successMessage").style.visibility = "visible";
+                document.getElementById("errorMessage").style.visibility = "hidden";
+                $scope.successMessage = "Preferences successfully set!";
+                $scope.errorMessage = "";
+    		}, function(rejection) {
+                $scope.reload();
+                $scope.successMessage = "";
+                document.getElementById("successMessage").style.visibility = "hidden";
+                document.getElementById("errorMessage").style.visibility = "visible";
+                $scope.errorMessage = "Could not set preferences";
+    		}
+    	);
+  }};
+  
+
+		$scope.reload();
+		});
+			
+</script>
+		<div ng-app="managePharmacistsApp" ng-controller="managePharmacistsCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Patient Manage Preferences</h3>
+							</div>
+							<div class="panel-body">
+							<h4>Current Preferences:</h4><br>
+							<p ng-model="existingPharmacy"><b>Pharmacy:</b> {{existingPharmacy}} </p>
+							<p ng-model="existingBrand"><b>Prescription Type:</b> {{existingBrand}} </p>
+							<hr class="hr">
+							<h4>Set Preferences:</h4><br>
+							<form name="getStateForm">
+							<b>State:</b> <select id="state" name="state" ng-model="state" ng-change="loadPharmacies(state)">
+														<option value="AL">Alabama</option>
+														<option value="AK">Alaska</option>
+														<option value="AZ">Arizona</option>
+														<option value="AR">Arkansas</option>
+														<option value="CA">California</option>
+														<option value="CO">Colorado</option>
+														<option value="CT">Connecticut</option>
+														<option value="DE">Delaware</option>
+														<option value="DC">District Of Columbia</option>
+														<option value="FL">Florida</option>
+														<option value="GA">Georgia</option>
+														<option value="HI">Hawaii</option>
+														<option value="ID">Idaho</option>
+														<option value="IL">Illinois</option>
+														<option value="IN">Indiana</option>
+														<option value="IA">Iowa</option>
+														<option value="KS">Kansas</option>
+														<option value="KY">Kentucky</option>
+														<option value="LA">Louisiana</option>
+														<option value="ME">Maine</option>
+														<option value="MD">Maryland</option>
+														<option value="MA">Massachusetts</option>
+														<option value="MI">Michigan</option>
+														<option value="MN">Minnesota</option>
+														<option value="MS">Mississippi</option>
+														<option value="MO">Missouri</option>
+														<option value="MT">Montana</option>
+														<option value="NE">Nebraska</option>
+														<option value="NV">Nevada</option>
+														<option value="NH">New Hampshire</option>
+														<option value="NJ">New Jersey</option>
+														<option value="NM">New Mexico</option>
+														<option value="NY">New York</option>
+														<option value="NC">North Carolina</option>
+														<option value="ND">North Dakota</option>
+														<option value="OH">Ohio</option>
+														<option value="OK">Oklahoma</option>
+														<option value="OR">Oregon</option>
+														<option value="PA">Pennsylvania</option>
+														<option value="RI">Rhode Island</option>
+														<option value="SC">South Carolina</option>
+														<option value="SD">South Dakota</option>
+														<option value="TN">Tennessee</option>
+														<option value="TX">Texas</option>
+														<option value="UT">Utah</option>
+														<option value="VT">Vermont</option>
+														<option value="VA">Virginia</option>
+														<option value="WA">Washington</option>
+														<option value="WV">West Virginia</option>
+														<option value="WI">Wisconsin</option>
+														<option value="WY">Wyoming</option>
+													</select> <br>
+													</form>
+							<form name="assignPharmacistForm" ng-submit="setDefaultPrefs()">
+														<br>
+														<b>Pharmacy:</b> <select name="selectPharmacy" id="selectedPharmacy"
+														ng-model="selectedPharmacy"
+														ng-options="i.name for i in pharmacies | orderBy: 'name'"></select>
+														<br> <br><br>
+														<b>Prescription Type:</b> <br><br>
+														 <label for="assignBrand">Brand</label> 
+														<input name="assignBrand" type="radio" id="brand" ng-model="patientPreferenceForm.branded" value="true" required> 
+														<br> <label for="assignGeneric">Generic</label>
+														<input name="assignBrand" type="radio" id="generic" ng-model="patientPreferenceForm.branded" value="false" required>
+														<br><br>
+													<br><br>
+													<input type="submit" id="submit"
+														value="Save Preferences"/>
+													</form>
+													<div>
+														<p style="color: red" ng-model="errorMessage" id="errorMessage">{{errorMessage}}</p>
+													</div>
+													<div>
+														<p style="color: green" ng-model="successMessage" id="successMessage">{{successMessage}}</p>
+													</div>
+								
+
+<style>
+
+.hr {
+	height: 1px;
+    background-color: #337ab7;
+}
+  
+    
+.formNotEdit {
+	width: 400px;
+}
+
+.label {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+	color: #000000;
+}
+
+input[type=text] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+
+.edit-form {
+	background-color: red;
+	color: white;
+}
+
+.edit-overlay {
+	position: fixed;
+	width: 900px;
+	height: 300px;
+	z-index: 9001;
+	margin: 10%;
+}
+
+.form-popup {
+	height: 100%;
+	width: 100%;
+	visibility: hidden;
+	display: grid;
+	grid-template-columns: auto auto;
+	grid-template-rows: auto auto auto;
+	grid-template-areas: 'editHeader editHeader editHeader'
+		'left right right' 'left right right' 'footer footer footer';
+	grid-gap: 1%;
+	color: black;
+	border: 3px solid #000000;
+	background-color: gray;
+}
+
+.form-popup>div form {
+	padding: 0.5%;
+}
+
+.form-container input[type=text]:focus {
+	background-color: hotpink;
+	outline: 2px black;
+}
+
+.editHeaderTitle {
+	text-align: center;
+	grid-area: editHeader;
+	font-size: 30px;
+	border: 2px solid blue;
+}
+
+.sectioned {
+	box-sizing: border-box;
+	align-items: center;
+	border: 1px solid black;
+	height: 100%;
+	overflow: hidden;
+}
+
+.left {
+	grid-area: left;
+	width: 80%;
+}
+
+.right {
+	grid-area: right;
+}
+
+.sel-pharm-pharmacists {
+	border: 3px solid black;
+	width: 90%;
+	overflow-y: scroll;
+	overflow-x: scroll;
+}
+
+th {
+	text-align: left;
+	align-self: center;
+}
+
+</style>
+								<br>
+							</div>
+						</div>
+					</div>
+				</div>
+				</div>
+				</div>
+				</div>
+</body>
+</html>

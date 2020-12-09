@@ -1,0 +1,191 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>View Prescriptions</title>
+</head>
+
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+
+
+		<script th:inline="javascript">
+      /* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+      /*<![CDATA[*/
+      var app = angular.module("prescriptionsApp", []);
+
+      app.controller('prescriptionsCtrl', function ($scope, $http) {
+    	$scope.curPersonnel = {};
+        $scope.prescriptions = [];
+        $scope.message = "";
+        $scope.successMessage = ""; //Sumit's line
+		$scope.errorMessage = "";  //Sumit's line
+        
+        $scope.loadTable = function () {
+          $http.get("/iTrust2/api/v1/pharmacies/"+ $scope.curPersonnel.institutionId + "/prescriptions").then(
+            function (response) {
+              $scope.prescriptions = response.data;
+              $scope.errorMessage = "";
+            }, function (rejection) {
+              $scope.prescriptions = [];
+              $scope.errorMessage = "Could not display prescriptions";
+            });
+        }
+        
+        /** Testing cause loadTables() somehow sees the curPersonnel object as undefined
+        * Sumit's function
+         */
+        $scope.loadPrescriptions = function () {
+			$http.get("/iTrust2/api/v1/curPersonnel").then (
+					function (response) {
+						$http.get("/iTrust2/api/v1/pharmacies/"+ response.data.institutionId + "/prescriptions").then(
+								function (response2) {
+									console.log ("Fetched Prescriptions");
+									$scope.prescriptions = response2.data;
+									$scope.errorMessage = "";
+								}, function (rejection) {
+									$scope.errorMessage = "Could not load prescriptions!";
+									$scope.successMessage = "";
+								}
+						);
+					}, function (rejection) {
+						$scope.errorMessage = "Could not load prescriptions!";
+						$scope.successMessage = "";
+					}
+			);
+          }
+        /** Testing ends
+         */
+        //Sumit's function
+        $scope.loadCurPersonnel = function () {
+        	$http.get("/iTrust2/api/v1/curPersonnel").then (
+        			function (response) {
+        				$scope.curPersonnel = response.data;
+        				$scope.errorMessage = "";
+        			}, function (rejection) {
+        				$scope.errorMessage = "Could not fetch your Personnel profile!";
+        			});
+        };
+        
+        /* 
+         * Idea inspiration from this link: 
+         * https://www.geeksforgeeks.org/angularjs-ng-disabled-directive/#:~:text=The%20ng%2Ddisabled%20Directive%20in,select%2C%20button%2C%20etc).
+         */
+        $scope.fillPrescription = function (prescription) {
+			//Sumit's API call.
+        	$http.put("/iTrust2/api/v1/prescriptions/fill/" + prescription.id).then(
+					function(response) {
+						$scope.successMessage = "Prescription filled successfully!";
+						$scope.errorMessage = "";
+						$scope.loadPrescriptions();
+					}, function(rejection) {
+						$scope.errorMessage = "Prescription could not be filled!";
+						$scope.successMessage = "";
+			    });
+          }
+          
+        $scope.prescriptionNotFilled = function(prescription) {
+        	var message = prompt("Enter your Message here:", "We were unable to fill your prescription.\n" +
+        						"Ask your healthcare provider to re-direct your prescription to a different pharmacy.\n" +
+								"We apologize for any inconvinience.");
+        	if (message == "") {
+        		$scope.successMessage = "";
+        		$scope.errorMessage = "Message cannot be empty!";
+        		return;
+        	}
+								alert("Sending Message: \n" + message);
+        	//Sumit's API call.
+        	$http.put("/iTrust2/api/v1/prescriptions/notify/" + prescription.id, message).then(
+					function(response) {
+						$scope.successMessage = "Patient was notified!";
+						$scope.errorMessage = "";
+						$scope.message = "";
+						$scope.loadPrescriptions();
+					}, function(rejection) {
+						$scope.errorMessage = "Could not send the message to the patient!";
+						$scope.successMessage = "";
+						$scope.message = "";
+			    });
+        	
+        }
+        
+        $scope.pickedUp = function (prescription) {
+        	//Sumit's API call.
+        	$http.put("/iTrust2/api/v1/prescriptions/pickup/" + prescription.id).then(
+					function(response) {
+						$scope.successMessage = "Prescription pickup recorded!";
+						$scope.errorMessage = "";
+						$scope.loadPrescriptions();
+					}, function(rejection) {
+						$scope.errorMessage = "Could not record prescription pickup!";
+						$scope.successMessage = "";
+			    });
+          };
+         
+        $scope.loadPrescriptions();
+        
+      });
+			/*]]>*/
+    </script>
+
+		<div ng-app="prescriptionsApp" ng-controller="prescriptionsCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>View Prescriptions</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<caption>Prescriptions:</caption>
+									<thead>
+										<tr>
+											<th>Patient Username</th>
+											<th>Drug</th>
+											<th>Dosage (mg)</th>
+											<th>Brand Preference</th>
+											<th>Date Received</th>
+											<th>Actions To do</th>
+											<th>Status</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="prescriptionTableRow" ng-repeat="p in prescriptions | orderBy: 'drug'">
+											<td name="userName">{{p.patient.username}}</td>
+											<td name="drugCell">{{p.drug.name}}</td>
+											<td name="codeCell">{{p.dosage}}</td>
+											<td name="prescriptionPreference">{{p.branded === true ? 'Branded' : 'Generic'}}</td>
+											<td name="dateReceived">{{p.dateSent | date :
+												'MM/dd/yyyy'}}</td>
+											<td> <!-- Sumit wrote the ng-show and ng-disabled for all these. -->
+												<div class="row text-center" align="center">
+                      								<div class="col-md-6">
+                        								<input type="button" value="Fill Prescription" id = "fillPrescription" class="btn btn-primary" name="fillPres" ng-click="fillPrescription(p)" ng-show = "!p.dateFilled" ng-disabled="p.dateFilled" />                         
+                      								</div>
+                      								<div class="col-md-6">
+                        								<input type="button" value="Notify Patient" class="btn btn-danger" name="unfilled" ng-click="prescriptionNotFilled(p)" ng-show = "!p.dateFilled" ng-disabled="p.dateFilled" />                         
+                      								</div><br>
+                      								<div class="col-md-6">
+                          								<input type="button" value="Picked Up" class="btn btn-primary" name="pickedUp" ng-click="pickedUp(p)" ng-show="p.dateFilled && !p.pickedUp" ng-disabled="p.pickedUp"/>                          
+                      								</div>
+                    							</div>
+											</td>
+											<td>{{p.pickedUp ? 'Picked up' : 'Not Picked'}}</td>
+										</tr>
+									</tbody>
+								</table>
+								<div><!-- Sumit wrote this entire division -->
+									<p style="color: red" ng-model="errorMessage" id="errorMessage">{{errorMessage}}</p>
+								</div>
+								<div>
+								<p style="color: green" ng-model="successMessage" id="successMessage">{{successMessage}}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Manage Pharmacists</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+		/* Otherwise Thymeleaf tries to parse Javascript as XML and breaks itself sometimes.  Sigh */
+		/*<![CDATA[*/
+ 			var app = angular.module("managePharmacistsApp", []);
+			app.controller("managePharmacistsCtrl", function($scope, $http) {
+				
+		    $scope.pharmacies = [];
+            $scope.pharmacists = [];
+            $scope.unassignedPharmacists = [];
+            $scope.selectedPharmacy = {};
+            $scope.selectedPharmacist = {};
+            $scope.successMessage = "";
+            $scope.errorMessage = "";
+		    
+	        $scope.loadPharmacies = function () {
+	          $http.get("/iTrust2/api/v1/pharmacies").then(
+	            function (response) {
+	              $scope.pharmacies = response.data;
+	            }, function (rejection) {
+	              $scope.pharmacies = [];
+	              $scope.errorMessage = "Could not get pharmacies";
+	            });
+	        }
+	        $scope.loadPharmacists = function() {
+	        	$http.get("/iTrust2/api/v1/pharmacists").then(
+	        			function(response) {
+	        				$scope.pharmacists = response.data;
+	        				
+	        				/* Creates list of unassigned pharmacists and fetches details for assigned ones*/
+	        				var i;
+	        				for (i = 0; i< $scope.pharmacists.length; i++) {
+	        					if($scope.pharmacists[i].assigned == false) {
+		        					$scope.unassignedPharmacists.push($scope.pharmacists[i]);
+	        					} else {
+	        						$scope.getPharmacyDetails($scope.pharmacists[i]);
+	        					}
+	        				}
+	        			}, function(rejection) {
+	                        document.getElementById("successMessage").style.visibility = "hidden";
+	                        document.getElementById("errorMessage").style.visibility = "visible";
+	        				$scope.pharmacists = [];
+	        				$scope.errorMessage = "Could not get pharmacists";
+	        			}
+	        	);
+	        }
+	        /* Is this necessary?????*/
+	        $scope.getTemplate = function (pharmacy) {
+	          return 'view';
+	        };
+	        
+			$scope.getPharmacyDetails = function(pharmacist) {
+	        	var toReturn = "";
+	        	$http.get("/iTrust2/api/v1/pharmacies/" + pharmacist.institutionId).then(
+	        			function (response) {
+	        				toReturn = response.data.name + ", " + response.data.address + ", " + response.data.state + " - " + response.data.zip;
+	        				pharmacist.institutionDetails = toReturn;
+	        			}, function (rejection) {
+	        				toReturn = "[Could not fetch pharmacy details]";
+	        				pharmacist.institutionDetails = toReturn;
+	        			}
+	        	);
+	        }
+	        
+	        $scope.reload = function() {
+                $scope.selectedPharmacy = {};
+                $scope.selectedPharmacist = {};
+	        	$scope.pharmacies = [];
+	        	$scope.pharmacists = [];
+	        	$scope.unassignedPharmacists = [];
+	        	$scope.loadPharmacies();
+                $scope.loadPharmacists();
+	        }
+	        
+
+  $scope.assignPharmacist = function () {
+    	$http.put("/iTrust2/api/v1/pharmacies/" + $scope.selectedPharmacy.id +"/" + $scope.selectedPharmacist.self.username).then(
+    		function(response) {
+                $scope.reload();
+                document.getElementById("successMessage").style.visibility = "visible";
+                document.getElementById("errorMessage").style.visibility = "hidden";
+                $scope.successMessage = "Successfully assigned pharmacist to pharmacy";
+                $scope.errorMessage = "";
+    		}, function(rejection) {
+                $scope.reload();
+                $scope.successMessage = "";
+                document.getElementById("successMessage").style.visibility = "hidden";
+                document.getElementById("errorMessage").style.visibility = "visible";
+                $scope.errorMessage = "Could not assign pharmacist";
+    		}
+    	);
+  };
+
+  $scope.unassignPharmacist = function (pharmacistId) {
+    $http.put('/iTrust2/api/v1/pharmacists/' + pharmacistId + '/' + 'unassign').then(
+			function(response) {
+                $scope.reload();
+                document.getElementById("successMessage").style.visibility = "visible";
+                document.getElementById("errorMessage").style.visibility = "hidden";
+                $scope.successMessage = "Successfully unassigned pharmacist from pharmacy";
+			}, function(rejection) {
+                $scope.reload();
+                document.getElementById("successMessage").style.visibility = "hidden";
+                document.getElementById("errorMessage").style.visibility = "visible";
+                $scope.errorMessage = "Could not unassign pharmacist";
+			}
+	);
+  };
+
+		$scope.reload();
+		});
+			
+</script>
+		<div ng-app="managePharmacistsApp" ng-controller="managePharmacistsCtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Admin Manage Pharmacists</h3>
+							</div>
+							<div class="panel-body">
+								<table class="table table-bordered">
+									<caption>Manage Pharmacists:</caption>
+									<thead>
+										<tr>
+											<th>Username</th>
+											<th>Name</th>
+											<th>Pharmacy Details</th>
+											<th>Unassign</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr name="pharmacyTableRow"
+											ng-repeat="h in pharmacists | orderBy: 'self.username'"
+											ng-include=getTemplate(h) userId={{h.self.username}}>
+										</tr>
+									</tbody>
+								</table>
+								<!-- table in view mode -->
+								<script type="text/ng-template" id="view">
+                  console.log("test");
+                  <td name="usernameCell">{{h.self.username}}</td>
+                  <td name="fullname">{{h.firstName}} {{h.lastName}}</td>
+                  <td name="pharmacyName">{{h.institutionDetails}}</td>
+                  <td>
+                    <div class="row text-center">
+                      <div class="col-md-6">
+                          <input type="button" value="Unassign" class="btn btn-danger" name="unassignPharmacist" ng-click="unassignPharmacist(h.self.username)" ng-disabled="!h.assigned"/>                          
+                      </div>
+                    </div>
+                  </td>          
+                  /*]]>*/
+                </script>
+
+								<style>
+.formNotEdit {
+	width: 400px;
+}
+
+.label {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+	color: #000000;
+}
+
+input[type=text] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+
+.edit-form {
+	background-color: red;
+	color: white;
+}
+
+.edit-overlay {
+	position: fixed;
+	width: 900px;
+	height: 300px;
+	z-index: 9001;
+	margin: 10%;
+}
+
+.form-popup {
+	height: 100%;
+	width: 100%;
+	visibility: hidden;
+	display: grid;
+	grid-template-columns: auto auto;
+	grid-template-rows: auto auto auto;
+	grid-template-areas: 'editHeader editHeader editHeader'
+		'left right right' 'left right right' 'footer footer footer';
+	grid-gap: 1%;
+	color: black;
+	border: 3px solid #000000;
+	background-color: gray;
+}
+
+.form-popup>div form {
+	padding: 0.5%;
+}
+
+.form-container input[type=text]:focus {
+	background-color: hotpink;
+	outline: 2px black;
+}
+
+.editHeaderTitle {
+	text-align: center;
+	grid-area: editHeader;
+	font-size: 30px;
+	border: 2px solid blue;
+}
+
+.sectioned {
+	box-sizing: border-box;
+	align-items: center;
+	border: 1px solid black;
+	height: 100%;
+	overflow: hidden;
+}
+
+.left {
+	grid-area: left;
+	width: 80%;
+}
+
+.right {
+	grid-area: right;
+}
+
+.editFooter {
+	margin: 10px;
+	grid-area: footer;
+}
+
+.sel-pharm-pharmacists {
+	border: 3px solid black;
+	width: 90%;
+	overflow-y: scroll;
+	overflow-x: scroll;
+}
+
+.confirmEdits {
+	clear: both;
+}
+
+.cancelEdits {
+	float: right;
+	clear: both;
+}
+
+th {
+	text-align: left;
+	align-self: center;
+}
+
+</style>
+								<br>
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading ">Assign a Pharmacist</div>
+											<div class="panel-body">
+												<form class="formNotEdit" name="assignPharmacistForm">
+													<b>Pharmacy</b> <select name="selectPharmacy" id="selectedPharmacy"
+														ng-model="selectedPharmacy"
+														ng-options="i.name + ', ' + i.state + ' - ' + i.zip for i in pharmacies | orderBy: 'name'"></select>
+													<br> <label for="assignPharmacist"><b>Unassigned
+															Pharmacists:</b></label> <select name="assignPharmacist"
+														ng-model="selectedPharmacist"
+														id = "selectedPharmacist"
+														ng-options="p.self.username for p in unassignedPharmacists | orderBy: 'username'">
+													</select> <br> <br>
+													<input type="submit" id="submit"
+														value="Assign Pharmacist" ng-click="assignPharmacist()"/>
+												</form>
+												<div>
+													<p style="color: red" ng-model="errorMessage" id="errorMessage">{{errorMessage}}</p>
+												</div>
+												<div>
+													<p style="color: green" ng-model="successMessage"
+														id="successMessage">{{successMessage}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				</div>
+				</div>
+				</div>
+</body>
+</html>

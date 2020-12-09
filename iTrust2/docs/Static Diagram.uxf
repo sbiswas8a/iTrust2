@@ -1,0 +1,304 @@
+<diagram program="umletino" version="14.3.0"><zoom_level>10</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLPackage</id><coordinates><x>40</x><y>1070</y><w>590</w><h>330</h></coordinates><panel_attributes>/edu.ncsu.csc.itrust2.forms/
+--
+bg=orange
+group=1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>70</x><y>1110</y><w>250</w><h>260</h></coordinates><panel_attributes>bg=green
+PharmacyForm
+/edu.ncsu.csc.itrust2.forms.admin/
+--
+-name: String
+-address: String
+-zip: String
+-state: String
+--
++PharmacyForm()
++PharmacyForm(Pharmacy)
++String getName(): String
++setName(String): void
++getAddress(): String
++setAddress(String): void
++getZip(): String
++setZip(String): void
++getState(): String
++setState(String): void                                                                    
+
+group=1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLPackage</id><coordinates><x>40</x><y>0</y><w>1360</w><h>1050</h></coordinates><panel_attributes>/edu.ncsu.csc.itrust2.models/
+--
+bg=yellow</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>480</x><y>30</y><w>190</w><h>50</h></coordinates><panel_attributes>bg=pink
+/DomainObject&lt;T&gt;/
+/edu.ncsu.itrust2.models.persistent/
+--
+--</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>80</x><y>140</y><w>300</w><h>520</h></coordinates><panel_attributes>bg=pink
+Pharmacy
+/edu.ncsu.csc.itrust2.models.persistent/
+--
+-serialVersionUID: long
+-institutionType: InstitutionType
+-name: String
+-address: String
+-zip: String
+-state: State (Enum)
+-pharmacists: List&lt;Personnel&gt;
+-prescriptions: List&lt;Prescriptions&gt;
+--
++Pharmacy()
++Pharmacy(PharmacyForm)
++Pharmacy(String, String, String, String)
+_+getByName(String): Pharmacy_
+_+getWhere(List&lt;Criterion&gt;): List&lt;Pharmacy&gt;_
+_+getPharmacies(): List&lt;Pharmacy&gt;_
++getName(): String
++setName(String): void
++getAddress(): String
++setAddress(String): void
++getState(): State
++setState(State): void
++getZip(): String
++setZip(String): void
++getId(): String
++getInstitutionType(): InstitutionType
++toString(): String
++getPrescriptionById(Long): Prescription
++getPharmacistById(Long): User
++addPharmacist(Personnel): boolean
++removePharmacist(Long): boolean
++addPrescription(Prescription): boolean
++fillPrescription(Personnel, Prescription): boolean
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>190</x><y>70</y><w>320</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>300;10;300;40;10;40;10;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>750</x><y>140</y><w>300</w><h>580</h></coordinates><panel_attributes>bg=pink
+Prescription
+/edu.ncsu.csc.itrust2.models.persistent/
+--
+-id: Long
+-drug: Drug
+-dosage: int
+-startDate: LocalDate
+-endDate: LocalDate
+-renewals: int
+-patient: User
+-branded: boolean
+-sent: boolean
+-filledBy: Personnel
+-filledOn: LocalDate
+--
++Prescription()
++Prescription(PrescriptionForm)
++setId(Long):void
++getId(): Long
++getDrug(): Drug
++setDrug(Drug): void
++getDosage(): int
++setDosage(int): void
++getStartDate(): LocalDate
++setStartDate(LocalDate): void
++getEndDate(): LocalDate
++setEndDate(): LocalDate
++getRenewals(): int
++setRenewals(int): void
++getPatient(): User
++setPatient(User): void
++getForPatient(String): List&lt;Prsecription&gt;
++getWhere(List&lt;Criterion&gt;):List&lt;Prescription&gt;
++getById(Long): Prescription
++getPrescriptions(): List&lt;Prescription&gt;
++getByPharmacist(Personnel): List&lt;Prescription&gt;
++fillPrescription(User, LocalDate): void
++getFilledBy(): Personnel
++getFilledOn(): LocalDate</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>610</x><y>70</y><w>290</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;50;270;50;270;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1080</x><y>530</y><w>280</w><h>500</h></coordinates><panel_attributes>bg=red
+TransactionType
+/edu.ncsu.csc.itrust2.models.enums/
+--
+...
+...
+...
+CREATE_PHARMACY               (550)
+VIEW_PHARMACY                    (551)
+EDIT_PHARMACY                     (552)
+DELETE_PHARMACY               (553)
+...
+PHARMACIST_ASSIGN            (575)
+PHARMACIST_UNASSIGN       (576)
+...
+PRESCRIPTION_SENT             (915)
+PRESCRIPTION_FILL               (916)
+...
+PATIENT_PREFERENCE_SET (1202)
+...
+...
+--
+-code: int
+-description: String
+-patientView: boolean
+--
+-TransactionType(int, String, boolean)
++getCode(): int
++getDescription(): String
++isPatientViewable(): boolean</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>750</x><y>740</y><w>300</w><h>290</h></coordinates><panel_attributes>bg=red
+Role
+/edu.ncsu.csc.itrust2.models.enums/
+--
+ROLE_PATIENT          ( 1, "patient/index" )
+ROLE_HCP                 ( 2, "hcp/index" )
+ROLE_ADMIN             ( 3, "admin/index" )
+ROLE_ER                   ( 4, "er/index" )
+ROLE_LABTECH        ( 5, "labtech/index" )
+ROLE_OD                   ( 6, "hcp/index" )
+ROLE_OPH                 ( 7, "hcp/index" )
+ROLE_VIROLOGIST   ( 8, "hcp/index" )
+ROLE_PHARMACIST  ( 9, "hcp/index" )
+--
+-code: int
+-landingPage: String
+-patientView: boolean
+--
+-Role(int, String)
++getCode(): int
++getLanding(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>900</x><y>1100</y><w>280</w><h>170</h></coordinates><panel_attributes>bg=red
+AdminController
+/edu.ncsu.csc.itrust2.controllers.admin/
+--
+--
++index(Model): String
++manageUser(Model): String
++drugs(Model): String
++loincCodes(): String
++manageHospital(Model): String
++managePharmacy(Model): String
++managePharmacists(Model): String
++addCode(Model): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>640</x><y>1450</y><w>330</w><h>180</h></coordinates><panel_attributes>bg=red
+APIPharmacyController
+/edu.ncsu.csc.itrust2.controllers.api/
+--
+--
++getPharmacies(): List&lt;Pharmacy&gt;
++getPharmacy(String): ResponseEntity
++createPharmacy(PharmacyForm): ResponseEntity
++updatePharmacy(String, PharmacyForm): ResponseEntity
++deletePharmacy(String): ResponseEntity
++getPrescriptions(): List&lt;Prescriptions&gt;
++addPrescription(Prescription): ResponseEntity
++fillPrescription(Personnel, Prescription): ResponseEntity</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>900</x><y>1290</y><w>280</w><h>50</h></coordinates><panel_attributes>bg=red
+APIController
+/edu.ncsu.csc.itrust2.controllers.api/
+--
+--
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>940</x><y>1330</y><w>30</w><h>140</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;120</additional_attributes></element><element><id>UMLClass</id><coordinates><x>430</x><y>140</y><w>290</w><h>890</h></coordinates><panel_attributes>bg=pink
+Personnel
+/edu.ncsu.csc.itrust2.models.persistent/
+--
+-self: User
+-enabled: boolean
+-firstName: String
+-lastName: String
+-address1: String
+-address2: String
+-city: String
+-state: State
+-zip: String
+-phone: String
+-specialty: Specialty
+-email: String
+-id: Long
+-insitutionType: InstitutionType
+-institutionId: String
+-assigned: boolean
+--
++Personnel()
++Personnel(PersonnelForm)
+_+getByName(String): Personnel_
+_+getByName(User): Personnel_
+_+getPersonnel(): List&lt;Personnel&gt;_
+_+getWhere(List&lt;Criterion&gt;): List&lt;Personnel&gt;_
++getId(): Long
++setId(String): void
++getSelf(): User
++setSelf(User): void
++getEnabled(): boolean
++setEnabled(boolean): void
++getFirstName(): String
++setFirstName(String): void
++getLastName(): String
++setLastName(String): void
++getAddress1(): String
++setAddress1(String): void
++getAddress2(): String
++setAddress2(String): void
++getCity(): String
++setCity(String): void
++getState(): State
++setState(State): void
++getZip(): String
++setZip(String): void
++getPhone(): String
++setPhone(String): void
++getSpecialty(): Specialty
++setSpecialty(Specialty): void
++getEmail(): String
++setEmail(String): void
++getInstitutionType(): InstitutionType
++setInsitutionType(InstitutionType): void
++getInstitutionId(): String
++setInstitutionId(String): void
++assign(InstitutionType, String): void
++unassign(): void
++isAssigned(): boolean
++toString(): String</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>550</x><y>70</y><w>30</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>130</x><y>700</y><w>250</w><h>170</h></coordinates><panel_attributes>bg=pink
+InsitutionType
+/edu.ncsu.csc.itrust2.models.persistent/
+--
+-id: Long
+-type: String
+--
++InstitutionType()
++InstitutionType(String)
++getType(): String
+_+getInstitutionTypes(): List&lt;InstitutionType&gt;_
+_+getByName(String): InstitutionType_</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>100</x><y>650</y><w>50</w><h>130</h></coordinates><panel_attributes>lt=&lt;-</panel_attributes><additional_attributes>30;110;10;110;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>370</x><y>750</y><w>80</w><h>30</h></coordinates><panel_attributes>lt=&lt;-</panel_attributes><additional_attributes>10;10;60;10</additional_attributes></element><element><id>Relation</id><coordinates><x>260</x><y>70</y><w>270</w><h>650</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>250;10;250;50;150;50;150;610;10;610;10;630</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1010</x><y>1400</y><w>350</w><h>90</h></coordinates><panel_attributes>bg=red
+APIPatientPreferenceController
+/edu.ncsu.csc.itrust2.controllers.api/
+--
+--
++clearPatientPreference(): ResponseEntity
++setPatientPreference(PatientPreferenceForm): ResponseEntity</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>1120</x><y>1330</y><w>30</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>350</x><y>1110</y><w>250</w><h>260</h></coordinates><panel_attributes>bg=green
+PatientPreferenceForm
+/edu.ncsu.csc.itrust2.forms.admin/
+--
+-branded: boolean
+-pharmacy: Pharmacy
+--
++PatientPreferenceForm()
++PatientPreferenceForm(boolean, Pharmacy)
++getBrandPreference(): boolean
++setBrandPreference(boolean): void                                                             
++getDefaultPharmacy(): Pharmacy
++setDefaultPharmacy(Pharmacy): void
+group=1</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1080</x><y>140</y><w>280</w><h>360</h></coordinates><panel_attributes>bg=pink
+Patient
+/edu.ncsu.csc.itrust2.models.persistent/
+--
+...
+...
+...
+-brandPreference: boolean
+-defaultPharmacy: Pharmacy
+...
+...
+...
+--
++Patient()
+...
+...
+...
++setPreferences(PatientPreferenceForm)
++clearPreferences(): void
++getBrandPreference(): boolean
++getDefaultPharmacy(): Pharmacy
++sendPrescription(Prescription, Pharmacy): void
+...
+...
+...</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>640</x><y>70</y><w>540</w><h>90</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;40;520;40;520;70</additional_attributes></element><element><id>UMLClass</id><coordinates><x>1010</x><y>1530</y><w>350</w><h>100</h></coordinates><panel_attributes>bg=red
+APIPharmacistController
+/edu.ncsu.csc.itrust2.controllers.api/
+--
+--
++getPharmacists(): List&lt;Personnel&gt;
++assignPharmacist(Pharmacy, Personnel): ResponseEntity
++unassignPharmacist(Pharmacy, Personnel): ResponseEntity</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>980</x><y>1330</y><w>100</w><h>220</h></coordinates><panel_attributes>lt=&lt;&lt;-</panel_attributes><additional_attributes>10;10;10;180;80;180;80;200</additional_attributes></element></diagram>
