@@ -14,4 +14,4 @@ We added support for:
  - Automated sending of prescriptions to Pharmacies
  - Pharmacists filling prescriptions
  
-Most of my work on this project was on the backend implementation (persistence classes and REST APIs). A more verbose and illustrated description of my work is [here]()
+Most of my work on this project was on the backend implementation (persistence classes and REST APIs). A more verbose and illustrated description of my work is [here](https://github.com/sbiswas8a/iTrust2/wiki/Backend-Design-and-Implementation)
